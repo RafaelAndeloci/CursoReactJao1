@@ -36,7 +36,11 @@ function ShoppingForm() {
         </select>
       </div>
 
-      <button type="submit" aria-label="Adicionar item">
+      <button
+        type="submit"
+        className={styles.submitButton}
+        aria-label="Adicionar item"
+      >
         <Plus size={24} />
       </button>
     </form>
