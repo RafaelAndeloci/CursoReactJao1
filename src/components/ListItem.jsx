@@ -3,21 +3,18 @@ import styles from "./ListItem.module.css";
 import { Apple, Beef, CakeSlice, Carrot, Milk, Trash2 } from "lucide-react";
 
 function ListItem({ item, onDelete, onCheckedChange }) {
-
   function handleChange(event) {
-    onCheckedChange(item.id, event.target.checked)
+    onCheckedChange(item.id, event.target.checked);
   }
 
   return (
     <li className={styles.item}>
-      <input type="checkbox" 
-      checked={item.purchased}
-      onChange={handleChange} />
+      <input type="checkbox" checked={item.purchased} onChange={handleChange} />
 
       <div>
         <p>{item.name}</p>
         <span>
-          {item.quantity} {item.unity}
+          {item.quantity} {item.quantity > 1 ? item.unity + "s" : item.unity}
         </span>
       </div>
 

@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import styles from "./ShoppingForm.module.css";
 import { Plus } from "lucide-react";
 
 function ShoppingForm({ onSubmit }) {
+  const inputRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
   let [name, setName] = useState("");
-  let [quantity, setQuantity] = useState("");
   let [unity, setUnity] = useState("unidade");
+  let [quantity, setQuantity] = useState("");
   let [category, setCategory] = useState("padaria");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    
+    setIsLoading(true);
+
     const formData = {
       name,
       quantity,
@@ -18,7 +21,16 @@ function ShoppingForm({ onSubmit }) {
       category,
     };
 
-    onSubmit(formData);
+    await onSubmit(formData);
+    setIsLoading(false);
+
+    //Reseting the form
+    setName("");
+    setQuantity("");
+    setUnity("unidade");
+    setCategory("padaria");
+
+    inputRef.current?.focus();
   }
 
   return (
@@ -33,6 +45,9 @@ function ShoppingForm({ onSubmit }) {
           id="name"
           value={name}
           onChange={(event) => setName(event.target.value)}
+          required
+          placeholder="Banana"
+          minLength={2}
         />
       </div>
 
@@ -47,12 +62,15 @@ function ShoppingForm({ onSubmit }) {
             id="quantity"
             value={quantity}
             onChange={(event) => setQuantity(event.target.value)}
+            required
+            min={1}
           />
           <select
             id="unity"
             className={styles.select}
             value={unity}
             onChange={(event) => setUnity(event.target.value)}
+            required
           >
             <option value="unidade">Un.</option>
             <option value="litro">Lt.</option>
@@ -81,6 +99,7 @@ function ShoppingForm({ onSubmit }) {
         type="submit"
         className={styles.submitButton}
         aria-label="Adicionar item"
+        disabled={isLoading}
       >
         <Plus size={24} />
       </button>

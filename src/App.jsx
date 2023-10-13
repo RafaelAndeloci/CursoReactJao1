@@ -1,42 +1,70 @@
+import { useEffect, useState } from "react";
 import styles from "./App.module.css";
+
 import bgImage from "./assets/bg-image.jpg";
-import ShoppingForm from "./components/ShoppingForm";
 import ListItem from "./components/ListItem";
-import { useState } from "react";
-
-const ITEMS = [
-  {
-    id: 1,
-    name: "Banana",
-    category: "fruta",
-    quantity: 10,
-    unity: "unidade",
-    purchased: false,
-  },
-];
-
+import ShoppingForm from "./components/ShoppingForm";
 
 function App() {
-  
-  const [items, setItem] = useState(ITEMS);
-  let counter = (items[items.length - 1]?.id ?? 0) + 1;
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(formData) {
-    const newItem = {
-      ...formData,
-      id: counter,
+  const purchasedItems = items.filter((item) => item.purchased);
+
+  //Hook
+  useEffect(() => {
+    setIsLoading(true);
+    fetch("http://localhost:3332/items")
+      .then((res) => res.json())
+      .then((data) => {
+        setItems(data);
+        setIsLoading(false);
+      });
+  }, []);
+
+  async function handleCreate(formData) {
+    const res = await fetch("http://localhost:3332/items", {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      body: JSON.stringify({ ...formData, purchased: false }),
+    });
+    const data = await res.json();
+
+    setItems([...items, data]);
+  }
+
+  async function handleDelete(id) {
+    await fetch("http://localhost:3332/items/" + id, {
+      method: "DELETE",
+    });
+    const newItems = items.filter((item) => item.id !== id);
+    setItems(newItems);
+  }
+
+  async function handleCheckedChange(id, checked) {
+    //Doing a Optimistic UI
+    try {
+      const newItems = items.map((item) =>
+        item.id === id ? { ...item, purchased: checked } : item
+      );
+      setItems(newItems);
+
+      await fetch("http://localhost:3332/items/" + id, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "PATCH",
+        body: JSON.stringify({ purchased: checked }),
+      });
+    } catch (error) {
+      const newItems = items.map((item) =>
+        item.id === id ? { ...item, purchased: !checked } : item
+      );
+      setItems(newItems);
+      alert(error);
     }
-    setItem([...items, newItem]);
-  }
-
-  function handleDelete(id) {
-    const newItems = items.filter(item => item.id !== id)
-    setItem(newItems)
-  }
-
-  function handleChecked(id, checked) {
-    const newItems = items.map(item => item.id === id ? { ...item, purchased: checked}: item)
-    setItem(newItems)
   }
 
   return (
@@ -47,12 +75,28 @@ function App() {
 
       <main className={styles.main}>
         <h1>Lista de compras</h1>
-        <ShoppingForm onSubmit={(formData) => handleSubmit(formData)} />
+
+        <ShoppingForm onSubmit={handleCreate} />
+
+        <div className={styles.purchasedItems}>
+          Itens comprados <span>{purchasedItems.length}</span>
+        </div>
 
         <ul className={styles.itemList}>
-          {items.map((item) => (
-            <ListItem onCheckedChange={handleChecked} onDelete={handleDelete} key={item.id} item={item} />
-          ))}
+          {items.length > 0 ? (
+            items.map((item) => (
+              <ListItem
+                key={item.id}
+                item={item}
+                onDelete={handleDelete}
+                onCheckedChange={handleCheckedChange}
+              />
+            ))
+          ) : isLoading ? (
+            <p>Buscando Itens...</p>
+          ) : (
+            <p>Não há nenhum item na lista.</p>
+          )}
         </ul>
       </main>
     </div>
